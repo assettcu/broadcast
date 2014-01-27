@@ -1,3 +1,12 @@
 assets/
 protected/runtime/
 themes/classic/views/
+library/facebook/facebook-php-sdk-master/src/config.php
+library/googleplus/google-api-php-client/src/config.php
+library/twitter/twitteroauth-master/config.php
+protected/config/main.php
+library/audio/morse
+library/audio/speech
+library/googleplus/profile/
+library/facebook/profile/
+library/twitter/profile/
