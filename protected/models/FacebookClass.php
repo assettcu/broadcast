@@ -73,7 +73,7 @@ class FacebookClass extends SocialMedia
     {
         $this->update_user_account();
         $this->user_account = @$_SESSION[$this->facebookprofile];
-        $this->username     = $this->user_account["username"];
+        //$this->username     = $this->user_account["username"];
         $this->fullname     = $this->user_account["name"];
         return $this->user_account;
     }
@@ -130,7 +130,7 @@ class FacebookClass extends SocialMedia
         $this->latest_status    = array(
             "id"        => @$status["id"],
             "message"   => @$status["message"],
-            "url"       => "//facebook.com/".$this->user_account["username"]."/posts/".$status["id"],
+            //"url"       => "//facebook.com/".$this->user_account["username"]."/posts/".$status["id"],
             "updated"   => @$status["updated"]
         );
         $_SESSION[$this->facebookstatus]      = $this->latest_status;

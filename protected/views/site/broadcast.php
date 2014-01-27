@@ -187,7 +187,7 @@ div.icon-header h1 {
                     <div class="flash-icon"><?php $media->render_profile_thumb("40px"); ?></div>
                     <div class="icon-text-align abspos">Connected as 
                         <a href="<?php echo $media->username; ?>" target="_blank"><?php echo $media->fullname; ?></a><br/>
-                        <a href="<?php echo $media->latest_status["url"]; ?>" class="latest-status-link" target="_blank">
+                        <!--<a href="<?php //echo $media->latest_status["url"]; ?>" class="latest-status-link" target="_blank">--->
                             <div class="icon-text-align" style="color:#999;">
                                 <i>"<?php echo substr($media->latest_status["message"],0,90); ?><?php echo (strlen($media->latest_status["message"])>100) ? "...": ""; ?>"</i>
                             </div>
@@ -243,7 +243,7 @@ div.icon-header h1 {
         </tr>
     </tbody>
 </table>
-<?php var_dump($_SESSION);  ?>
+
 <script>
 jQuery(document).ready(function($){
     $("a.dc-link").click(function(){
