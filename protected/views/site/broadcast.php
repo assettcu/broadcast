@@ -223,13 +223,11 @@ div.email-fancy-header .email-fancy-header-text {
         <td width="130px">
             <?php if($media->auth_required==1): ?>
 				<?php if($media->has_clear_status()): ?>					
-					<a href="<?php echo Yii::app()->createUrl('_disconnect'); ?>?method=<?php echo $media->appname; ?>" class="dc-link">
-                        <div class="flash-icon"><?php echo StdLib::load_image('disconnect','16px'); ?></div> disconnect
-                    </a>
+     				<div class="flash-icon"><?php echo StdLib::load_image('disconnect','16px'); ?></div>
+					<button id="disconnect-from-media" class="connection-media-button" name="<?php echo Yii::app()->createUrl('_disconnect'); ?>?method=<?php echo $media->appname; ?>" style="background:none;border:none;padding:0;border-bottom:1px;">disconnect</button>
                 <?php else: ?>
 					<div class="flash-icon"><?php echo StdLib::load_image('sync','16px'); ?></div>
-					<button class="reconnect-media-button" name="<?php echo $media->getLoginUrl(); ?>" style="background:none;border:none;padding:0;border-bottom:1px;">reconnect</button>
-					
+					<button id="reconnect-to-media" class="connection-media-button" name="<?php echo $media->getLoginUrl(); ?>" style="background:none;border:none;padding:0;border-bottom:1px;">reconnect</button>
 					
                 <?php endif; ?>
             <?php else: ?>
@@ -300,7 +298,7 @@ div.email-fancy-header .email-fancy-header-text {
         </tr>
     </tbody>
 </table>
-<div id="confirm-reconnect-media" title="Reconnect Confirmation">
+<div id="confirm-connection-media" title="Leave Page Confirmation">
 	Are you sure you want to navigate away from this page?  Anything you entered will be lost.<br/>
 </div>
 <script>
@@ -363,17 +361,13 @@ jQuery(document).ready(function($){
         });
         return false;
    });
-  
-   
-   
-   
    
    // Confirmation for reconnecting to media  
-	$(".reconnect-media-button").click(function(){
+	$(".connection-media-button").click(function(){
 		var url = $(this).attr("name");
-		$("#confirm-reconnect-media").data("url", url).dialog("open");
+		$("#confirm-connection-media").data("url", url).dialog("open");
 	});
-	$("div#confirm-reconnect-media").dialog({
+	$("div#confirm-connection-media").dialog({
 		autoOpen:	false,
 		resizable:	false,
 		height:		300,
@@ -381,19 +375,13 @@ jQuery(document).ready(function($){
 		modal:		true,
 		buttons: {
 			"Confirm": function() {
-				window.location.href = $("#confirm-reconnect-media").data("url");
+				window.location.href = $("#confirm-connection-media").data("url");
 			},
 			Cancel: function() {
 				$( this ).dialog( "close" );
 			}
 		}
 	});
-   
-   
-   
-   
-   
-   
    
    $(document).on("click",".approve-broadcast",function(){
        var broadcastid = $(this).parent().parent().attr("broadcastid");
