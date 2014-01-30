@@ -55,6 +55,16 @@ div#big-email-icon {
 	display:inline-block;
 	float:left;
 }
+div.email-fancy-header {
+	background-color:#990099;
+	font-weight:bold;
+	color:white;
+	height:35px;
+	line-height: 35px;
+}
+div.email-fancy-header .email-fancy-header-text {
+
+}
 </style>
 
 <div class="icon-header">
@@ -135,9 +145,9 @@ div#big-email-icon {
 		<?php $massemail->render_logo("40px"); ?>
 		<input type="radio" class="hidden-addresses" name="hidden-addresses" value="bcc" checked><b>Hide recipient addresses (bcc).</b><br>
 		<input type="radio" class="hidden-addresses" name="hidden-addresses" value="cc"><b>Leave addresses visible.</b><br><br> 
-		<div class="fancy-header">Email Subject Text</div>
+		<div class="email-fancy-header"><span class="email-fancy-header-text">&nbsp&nbspEmail Subject Text</span></div>
 		<input type="text" name="subject-input-field" id="subject-input-field" value="Type subject here...">
-		<div class="fancy-header">Receiver Addresses</div>
+		<div class="email-fancy-header"><span class="email-fancy-header-text">&nbsp&nbspReceiver Addresses</span></div>
 		<textarea name="addresses-input-field" id="addresses-input-field">Type email addresses here, separated by commas...</textarea>
 	</div>
 </form>
@@ -212,14 +222,15 @@ div#big-email-icon {
         </td>
         <td width="130px">
             <?php if($media->auth_required==1): ?>
-				<?php if($media->has_clear_status()): ?>
-                    <a href="<?php echo Yii::app()->createUrl('_disconnect'); ?>?method=<?php echo $media->appname; ?>" class="dc-link">
+				<?php if($media->has_clear_status()): ?>					
+					<a href="<?php echo Yii::app()->createUrl('_disconnect'); ?>?method=<?php echo $media->appname; ?>" class="dc-link">
                         <div class="flash-icon"><?php echo StdLib::load_image('disconnect','16px'); ?></div> disconnect
                     </a>
                 <?php else: ?>
-					<a href="<?php echo $media->getLoginUrl(); ?>">
-                        <div class="flash-icon"><?php echo StdLib::load_image('sync','16px'); ?></div> reconnect
-                    </a>
+					<div class="flash-icon"><?php echo StdLib::load_image('sync','16px'); ?></div>
+					<button class="reconnect-media-button" name="<?php echo $media->getLoginUrl(); ?>" style="background:none;border:none;padding:0;border-bottom:1px;">reconnect</button>
+					
+					
                 <?php endif; ?>
             <?php else: ?>
                 <div class="flash-icon"><?php echo StdLib::load_image("connected","20px"); ?></div>
@@ -289,6 +300,9 @@ div#big-email-icon {
         </tr>
     </tbody>
 </table>
+<div id="confirm-reconnect-media" title="Reconnect Confirmation">
+	Are you sure you want to navigate away from this page?  Anything you entered will be lost.<br/>
+</div>
 <script>
 jQuery(document).ready(function($){
 	// Send mass email if the $data parameter is set. Unset when finished.
@@ -350,6 +364,36 @@ jQuery(document).ready(function($){
         return false;
    });
   
+   
+   
+   
+   
+   // Confirmation for reconnecting to media  
+	$(".reconnect-media-button").click(function(){
+		var url = $(this).attr("name");
+		$("#confirm-reconnect-media").data("url", url).dialog("open");
+	});
+	$("div#confirm-reconnect-media").dialog({
+		autoOpen:	false,
+		resizable:	false,
+		height:		300,
+		width:		400,
+		modal:		true,
+		buttons: {
+			"Confirm": function() {
+				window.location.href = $("#confirm-reconnect-media").data("url");
+			},
+			Cancel: function() {
+				$( this ).dialog( "close" );
+			}
+		}
+	});
+   
+   
+   
+   
+   
+   
    
    $(document).on("click",".approve-broadcast",function(){
        var broadcastid = $(this).parent().parent().attr("broadcastid");
