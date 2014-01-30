@@ -72,7 +72,7 @@ class SiteController extends Controller
         $params["twitter"]          = new TwitterClass();
         $params["googleplus"]       = new GooglePlusClass();
         array_push($params["social"],$params["twitter"],$params["googleplus"],$params["fourwinds"]);
-        var_dump($_POST);
+        
         if(isset($_POST["broadcast-message-form-submitted"])) {
             # Load the mediums
             $mediums = array();

@@ -39,9 +39,8 @@ div.icon-header h1 {
     margin-left:10px;
 }
 div#email-options-form-container {
-	display:block;
-	margin-left:15%;
-	width:70%;
+	display:none;
+	width:100%;
 }
 input#subject-input-field{
 	padding:5px;
@@ -121,7 +120,7 @@ div#big-email-icon {
                             <?php $massemail->render_logo("16px"); ?> <?php echo $massemail->appcommonname; ?>
                         </div>
                         <div class="onoffswitch">
-                            <input type="checkbox" name="on-off-<?php echo @$massemail->appname; ?>" class="onoffswitch-checkbox" id="onoff-<?php echo @$massemail->appname; ?>" checked>
+                            <input type="checkbox" name="on-off-<?php echo @$massemail->appname; ?>" class="onoffswitch-checkbox" id="onoff-<?php echo @$massemail->appname; ?>">
                             <label class="onoffswitch-label" for="onoff-<?php echo @$massemail->appname; ?>">
                                 <div class="onoffswitch-inner"></div>
                                 <div class="onoffswitch-switch"></div>
@@ -292,7 +291,7 @@ div#big-email-icon {
 </table>
 <script>
 jQuery(document).ready(function($){
-    // Send mass email if the $data parameter is set. Unset when finished.
+	// Send mass email if the $data parameter is set. Unset when finished.
 	if('<?echo $json_data;?>'!=='undefined') {
 		var data = <?php echo $json_data; ?>;
 		$.ajax({
