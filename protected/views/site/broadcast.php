@@ -4,7 +4,8 @@ ini_set('display_startup_errors',1);
 error_reporting(-1);
 $flashes = new Flashes;
 $flashes->render();
-
+if(isset($data)) $json_data = json_encode($data);
+else $json_data = "undefined";
 //$_SESSION["facebook"] = $facebook;
 ?>
 
@@ -26,6 +27,8 @@ div.button-container button {
 }
 textarea {
     font-family: Verdana, Geneva, sans-serif;
+	width:100%;
+	height:100px;
 }
 div.icon-header {
     margin-bottom:10px;
@@ -34,6 +37,24 @@ div.icon-header h1 {
     display:inline-block;
     width:950px;
     margin-left:10px;
+}
+div#email-options-form-container {
+	display:block;
+	margin-left:15%;
+	width:70%;
+}
+input#subject-input-field{
+	padding:5px;
+	width:100%;
+}
+input.hidden-addresses {
+	float:left;
+	width:5%;
+}
+div#big-email-icon {
+	margin-left:5%;
+	display:inline-block;
+	float:left;
 }
 </style>
 
@@ -53,7 +74,7 @@ div.icon-header h1 {
 <?php endif; ?>
 
 <form method="post">
-    <input type="hidden" name="form-submitted" />
+    <input type="hidden" name="broadcast-message-form-submitted" />
     <div class="fancy-header">Broadcast a Message</div>
     <div class="posting-container">
         <div class="message-container" style="width:740px;float:left;">
@@ -92,8 +113,34 @@ div.icon-header h1 {
                 Broadcast to the World!
             </a>
         </div>
+		
+	
+		<div class="social-container" style="width:230px;float:right;margin-right:10px;">
+                    <div class="social-button ui-corner-all" style="width:100%;border:1px solid #09f;padding:5px;margin-bottom:4px;">
+                        <div style="margin:3px;display:inline-block;">
+                            <?php $massemail->render_logo("16px"); ?> <?php echo $massemail->appcommonname; ?>
+                        </div>
+                        <div class="onoffswitch">
+                            <input type="checkbox" name="on-off-<?php echo @$massemail->appname; ?>" class="onoffswitch-checkbox" id="onoff-<?php echo @$massemail->appname; ?>" checked>
+                            <label class="onoffswitch-label" for="onoff-<?php echo @$massemail->appname; ?>">
+                                <div class="onoffswitch-inner"></div>
+                                <div class="onoffswitch-switch"></div>
+                            </label>
+                        </div>
+                    </div>
+        </div>
+		
         <br class="clear" />
     </div>
+	<div id="email-options-form-container">	
+		<?php $massemail->render_logo("40px"); ?>
+		<input type="radio" class="hidden-addresses" name="hidden-addresses" value="bcc" checked><b>Hide recipient addresses (bcc).</b><br>
+		<input type="radio" class="hidden-addresses" name="hidden-addresses" value="cc"><b>Leave addresses visible.</b><br><br> 
+		<div class="fancy-header">Email Subject Text</div>
+		<input type="text" name="subject-input-field" id="subject-input-field" value="Type subject here...">
+		<div class="fancy-header">Receiver Addresses</div>
+		<textarea name="addresses-input-field" id="addresses-input-field">Type email addresses here, separated by commas...</textarea>
+	</div>
 </form>
 
 <table class="fancy-table">
@@ -243,26 +290,52 @@ div.icon-header h1 {
         </tr>
     </tbody>
 </table>
-
 <script>
 jQuery(document).ready(function($){
-    $("a.dc-link").click(function(){
+    // Send mass email if the $data parameter is set. Unset when finished.
+	if('<?echo $json_data;?>'!=='undefined') {
+		var data = <?php echo $json_data; ?>;
+		$.ajax({
+			"url": 'https://compass.colorado.edu/broadcast/api/massemail',
+			"type": 'POST',
+			"data": data,
+			
+			"success":   function(data) {
+				console.log(data);	
+				return false;
+			}
+		});
+	}
+	
+	$("a.dc-link").click(function(){
         $.post($(this).attr("href"),"",function(){
             window.location.reload(); 
         });
         return false;
    });
    $(document).on("focus","textarea",function(){
-      if($(this).val() == "Type message here...") {
+      if($(this).val() == "Type message here..." || $(this).val() == "Type email addresses here, separated by commas..." || $(this).val() == "Type subject here...") {
           $(this).html("");
       } 
    });
-   $(document).on("blur","textarea",function(){
-      if($(this).val().trim() == "") {
-          $(this).html("Type message here...");
+   $(document).on("focus","input",function(){
+      if($(this).val() == "Type subject here...") {
+          $(this).val("");
       } 
    });
-   
+   $(document).on("blur","textarea",function(){
+	  if($(this).val().trim() == "" && $(this).attr('id')==="addresses-input-field") {
+          $(this).html("Type email addresses here, separated by commas...");
+      }
+	  else if($(this).val().trim() == "") {
+          $(this).html("Type message here...");
+      } 	  
+   });
+   $(document).on("blur","input",function(){
+	  if($(this).val().trim() == "" && $(this).attr('id')==="subject-input-field") {
+          $(this).val("Type subject here...");
+      }
+   });
    $(document).on("click","#registerapp",function(){
         $.ajax({
            "url":    "<?php echo Yii::app()->createUrl("_register"); ?>",
@@ -317,8 +390,44 @@ jQuery(document).ready(function($){
    });
    
    $(document).on("click","#broadcast-button",function(){
-      $("form")[0].submit(); 
-      return false;
+      // If email is on, call API and submit the form upon returning.
+	  $("form")[0].submit(); 
+      console.log("after submission");
+	  return false;
+   });
+   // Email options
+   /*$(document).on("click", "#onoff-email",function() {
+		if($("#onoff-email").prop("checked", false)) {
+			$("#onoff-email").attr("checked", "checked");
+			alert("checked!");
+		}
+   });*/
+   $("#onoff-email").change(function() {
+		if($(this).is(':checked')){
+			//display options
+			$("#email-options-form-container").slideDown("slow").css('display', 'block');
+			//$("#big-email-icon").slideDown("slow").css('display', 'inline-block');
+		}
+		else{
+			//hide options
+			$('#email-options-form-container').slideUp();
+			//$("#big-email-icon").slideUp();
+		}
    });
 });
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

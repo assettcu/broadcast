@@ -56,15 +56,8 @@ class SiteController extends Controller
         }
         // For Facebook, refresh page if status code present.  
 		
-		var_dump($_REQUEST);
-		var_dump('**********************************');
-		var_dump($_SESSION);
-		var_dump('**********************************');
 		$params["social"] = array();
-		/*if(isset($_SESSION["facebook"])) {
-			$facebook = $_SESSION["facebook"];
-		}
-		else $facebook = new FacebookClass();*/
+
 		$facebook = new FacebookClass();
 		$params["facebook"] = $facebook;
 		array_push($params["social"], $params["facebook"]);
@@ -73,14 +66,14 @@ class SiteController extends Controller
 			//$this->redirect($facebook->getLoginUrl());
 			//$this->redirect(Yii::app()->createUrl('broadcast?deptid=' . $_REQUEST["deptid"]));
 		}
+		$params["massemail"]		= new MassemailClass();
         $params["dept"]             = $dept;
         $params["fourwinds"]        = new FourwindsClass();
         $params["twitter"]          = new TwitterClass();
         $params["googleplus"]       = new GooglePlusClass();
         array_push($params["social"],$params["twitter"],$params["googleplus"],$params["fourwinds"]);
-        
-
-        if(isset($_POST["form-submitted"])) {
+        var_dump($_POST);
+        if(isset($_POST["broadcast-message-form-submitted"])) {
             # Load the mediums
             $mediums = array();
             foreach($params["social"] as $media) {
@@ -88,19 +81,74 @@ class SiteController extends Controller
                     $mediums[] = $media->appname;
                 }
             }
+			# mass email
+		    $addresses = array();
+			if(isset($_POST["addresses-input-field"])) {
+				$addresses = array_map('trim', explode(",", $_POST["addresses-input-field"]));
+			}
+			if(isset($_POST["on-off-email"]) && $_POST["on-off-email"] == "on") {
+				//validate Subject text
+				if(!isset($_POST["subject-input-field"]) || empty($_POST["subject-input-field"])) {
+					Yii::app()->user->setFlash("error","You must include an email subject.");
+				}
+				//validate addresses
+				else if(empty($addresses)) {
+					Yii::app()->user->setFlash("error","You must enter one or more email addresses.");
+				}
+				else if(!isset($_POST["broadcast-message"]) || $_POST["broadcast-message"]==='Type message here...') {
+					Yii::app()->user->setFlash("error","Please type a message first!");
+				}
+				else {
+					foreach($addresses as $address) {
+						if(!preg_match('/^[_a-zA-Z0-9-]+(\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,4})$/', $address)) {
+							Yii::app()->user->setFlash("error","One or more of the email addresses entered were invalid.");
+							goto createBroadcast;
+						}
+					}
+					// Everything checks out so add $data to params.  In view, check for $data and if it's there fire the ajax function.
+					$user = new UserObj(Yii::app()->user->name);
+					$user_info = $user->getUserInfo()[0];
+					$user_address = $user_info["email"];
+					$user_full_name = $user_info["name"];
+					// for are_hidden, pass a string '0' or '1' for false and true, to be casted to boolean later.
+					$params["data"] = array(
+						'appkey' => '5F5C-EA02-368B',
+						'user' => array(
+							'username' => $user_info["username"],
+							'user_fullname' => $user_full_name,
+							'user_address' => $user_address
+						),
+						'metadata' => array(
+							'receivers' => $addresses,
+							'subject' => $_POST["subject-input-field"],
+							'are_hidden' => ($_POST["hidden-addresses"]==="cc") ? '0' : '1'
+						),
+						'message' => $_POST["broadcast-message"]
+					);
+				}
+			}
+			
+			createBroadcast:
             # Create a new Broadcast
             $broadcast = new BroadcastObj();
             $broadcast->deptid      = $dept->deptid;
             $broadcast->message     = $_POST["broadcast-message"];
-            $broadcast->media       = implode(",",$mediums);
-            $broadcast->status      = 1;
+            $broadcast->media       = (isset($params["data"])) ? implode(",",$mediums) . ", email" : implode(",",$mediums);
+            if(isset($params["data"]["metadata"])) $broadcast->metadata = $params["data"]["metadata"];
+			$broadcast->status      = 1;
             $broadcast->created_by  = Yii::app()->user->name;
             $broadcast->approved_by = Yii::app()->user->name;
             if(!$broadcast->save()) {
                 Yii::app()->user->setFlash("error","Error saving Broadcast: ".$broadcast->get_error());
                 goto renderBroadcast;
             }
-            
+            // Add the broadcast id to the email data params if necessary
+			if(isset($params["data"])) {
+				$params["data"]["broadcastid"] = $broadcast->broadcastid; 
+				$params["data"]["broadcast_status"] = $broadcast->status;
+			}
+			
+			createMessage:
             # Loop through each submitted media and make a message
             $messages = array();
             foreach($params["social"] as $media) {
@@ -128,16 +176,20 @@ class SiteController extends Controller
                     }
                 }
             }
-            if(!Yii::app()->user->hasFlash("error")) {
-                foreach($messages as $msgobj) {
+            if(!Yii::app()->user->hasFlash("error") || Yii::app()->user->getFlash("error", false, false) != "Error saving Broadcast message: ") {
+				foreach($messages as $msgobj) {
                     switch($msgobj->method) {
                         case "facebook":    $params["facebook"]->broadcast($msgobj); break;
                         case "twitter":     $params["twitter"]->broadcast($msgobj); break;
                         case "googleplus":  $params["googleplus"]->broadcast($msgobj); break;
                     }
                 }
-                Yii::app()->user->setFlash("success","Successfully broadcasted your message!");
-            }
+				if(isset($params["data"]))
+					Yii::app()->user->setFlash("success","Successfully broadcasted your message!");
+				else if(!isset($params["data"]) && isset($_POST["on-off-email"]) && $_POST["on-off-email"] == "on")
+					Yii::app()->user->setFlash("success","Your message was broacasted successfully on all channels except email.");
+				else Yii::app()->user->setFlash("success","Successfully broadcasted your message!");
+			}
         }
         
         renderBroadcast:
