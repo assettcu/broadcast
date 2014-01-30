@@ -63,7 +63,7 @@ class APIController extends Controller
     {
         $rest = new RestServer();
         $request = RestUtils::processRequest();
-		$required = array("appkey", "user","metadata", "message");
+		$required = array("appkey", "user","metadata", "message", "broadcastid", "broadcast_status");
         $keys = array_keys($request);
 
 		if(count(array_intersect($required, $keys)) != count($required)) {
@@ -87,36 +87,19 @@ class APIController extends Controller
             return RestUtils::sendResponse(312);
         }
 		
-		// Save as a broadcast and message object
-        $broadcast              = new BroadcastObj();
-        $broadcast->deptid      = $dept->deptid;
-        $broadcast->message     = $request["message"];
-        $broadcast->media       = 'email';
-        $broadcast->metadata    = $request["metadata"];    # Optional
-        $broadcast->status      = 0;
-        $broadcast->created_by  = $request["user"]["username"];
-        
-        if(!$broadcast->save()) {
-            return RestUtils::sendResponse(311);
-        }
-        
+		// Save a message object
         $msgobj                 = new MessageObj();
-        $msgobj->broadcastid    = $broadcast->broadcastid;
+        $msgobj->broadcastid    = $request["broadcastid"];
         $msgobj->method         = 'mail';
         $msgobj->username       = $request["user"]["username"];
         $msgobj->message        = $request["message"];
-        $msgobj->status         = $broadcast->status;
+        $msgobj->status         = $request["broadcast_status"];
         $msgobj->metadata       = $request["metadata"];
 		
-        # Thomas: here you can make sure that the message object is setup properly again, if it has correctly formatted recipient emails, subject, and body.
-        # Message object will dynamically look for a function called "function conditions_met_{mediatype}" where {mediatype} is the type of message you're sending
-        # In this case it would be "mail". Same with "function meet_conditions_{mediatype}" which properly formats messages for sending. Check the MessageObj for more.
         if(!$msgobj->conditions_met()) {
             return RestUtils::sendResponse(315);
         }
         if(!$msgobj->save()) {
-            # This will cascade delete all messages due to table foreign keys
-            $broadcast->delete();
             return RestUtils::sendResponse(311);
         }
 		
